@@ -20,6 +20,14 @@ export default function App() {
     );
   }
 
+  function handleClearList() {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete all items?"
+    );
+
+    if (confirmed) setItems([]);
+  }
+
   return (
     <div className="app">
       <Logo />
@@ -28,6 +36,7 @@ export default function App() {
         items={items}
         onDeleteItem={handleDeleteItem}
         onToggleItem={handleToggleItem}
+        onClearList={handleClearList}
       />
       <Stats items={items} />
     </div>
@@ -46,7 +55,6 @@ function Form({ onAddItems }) {
     e.preventDefault();
     if (!description) return;
     const newItem = { description, quantity, packed: false, id: Date.now() };
-    // console.log(newItem);
 
     onAddItems(newItem);
 
@@ -80,11 +88,36 @@ function Form({ onAddItems }) {
   );
 }
 
-function PackingList({ items, onDeleteItem, onToggleItem }) {
+function PackingList({ items, onDeleteItem, onToggleItem, onClearList }) {
+  const [sortBy, setSortBy] = useState("input");
+
+  let sortedItems;
+
+  switch (sortBy) {
+    case "input":
+      sortedItems = items;
+      break;
+
+    case "description":
+      sortedItems = items
+        .slice()
+        .toSorted((a, b) => a.description.localeCompare(b.description));
+      break;
+
+    case "packed":
+      sortedItems = items
+        .slice()
+        .toSorted((a, b) => Number(a.packed) - Number(b.packed));
+      break;
+
+    default:
+      sortedItems = items;
+  }
+
   return (
     <div className="list">
       <ul>
-        {items.map((item) => (
+        {sortedItems.map((item) => (
           <Item
             item={item}
             onDeleteItem={onDeleteItem}
@@ -93,6 +126,16 @@ function PackingList({ items, onDeleteItem, onToggleItem }) {
           />
         ))}
       </ul>
+
+      <div className="actions">
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+          <option value="input">Sort by Input Order</option>
+          <option value="description">Sort by Description</option>
+          <option value="packed">Sort by Packed Status</option>
+        </select>
+
+        <button onClick={onClearList}>Clear list</button>
+      </div>
     </div>
   );
 }
